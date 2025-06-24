@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CorsaHub.xyz – Admin Panel</title>
+  <link rel="stylesheet" href="/css/custom.css" />
+  <style>
+    .admin-section {
+      padding: 80px 24px;
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: left;
+    }
+    .admin-section h2 {
+      font-size: 28px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 8px 12px;
+      background-color: #1c1c1c;
+      color: white;
+      border: 1px solid #333;
+      border-radius: 6px;
+    }
+    .admin-actions button {
+      background-color: #2563eb;
+      color: white;
+      padding: 10px 16px;
+      margin-right: 12px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .admin-actions button:hover {
+      background-color: #1e40af;
+    }
+    .driver-list {
+      margin-top: 32px;
+    }
+    .driver-item {
+      padding: 12px;
+      border-bottom: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .driver-fields input {
+      background-color: #111;
+      border: 1px solid #444;
+      color: #eee;
+      padding: 6px;
+      border-radius: 4px;
+      margin-right: 8px;
+      width: 100px;
+    }
+    .error {
+      color: #f87171;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-logo">CorsaHub</div>
+    <div class="navbar-links">
+      <a href="index.html">Home</a>
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="rules.html">Rules</a>
+      <a href="admin.html">Admin</a>
+    </div>
+  </nav>
+
+  <section class="admin-section">
+    <h2>Admin Panel – Manage Drivers</h2>
+
+    <div id="error-message" class="error"></div>
+
+    <div class="form-group">
+      <label for="driver-name">Driver Name</label>
+      <input type="text" id="driver-name" />
+    </div>
+    <div class="form-group">
+      <label for="driver-team">Team</label>
+      <input type="text" id="driver-team" />
+    </div>
+    <div class="form-group">
+      <label for="driver-points">Points</label>
+      <input type="number" id="driver-points" />
+    </div>
+
+    <div class="admin-actions">
+      <button onclick="addDriver()">Add Driver</button>
+      <button onclick="clearDrivers()">Clear All</button>
+    </div>
+
+    <div class="driver-list" id="driver-list"></div>
+  </section>
+
+  <script>
+    const driverList = document.getElementById('driver-list');
+    const errorBox = document.getElementById('error-message');
+    let drivers = JSON.parse(localStorage.getItem('corsahubDrivers')) || [];
+
+    function saveDrivers() {
+      localStorage.setItem('corsahubDrivers', JSON.stringify(drivers));
+    }
+
+    function sortDrivers() {
+      drivers.sort((a, b) => b.points - a.points);
+    }
+
+    function renderDrivers() {
+      sortDrivers();
+      driverList.innerHTML = '';
+      drivers.forEach((d, index) => {
+        const div = document.createElement('div');
+        div.className = 'driver-item';
+        div.innerHTML = `
+          <div class="driver-fields">
+            <input type="text" value="${d.name}" onchange="updateDriver(${index}, 'name', this.value)" />
+            <input type="text" value="${d.team}" onchange="updateDriver(${index}, 'team', this.value)" />
+            <input type="number" value="${d.points}" onchange="updateDriver(${index}, 'points', this.value)" />
+          </div>
+          <button onclick="removeDriver(${index})">Remove</button>
+        `;
+        driverList.appendChild(div);
+      });
+    }
+
+    function updateDriver(index, key, value) {
+      if (key === 'points') value = parseInt(value);
+      drivers[index][key] = value;
+      saveDrivers();
+      renderDrivers();
+    }
+
+    function addDriver() {
+      const name = document.getElementById('driver-name').value.trim();
+      const team = document.getElementById('driver-team').value.trim();
+      const points = parseInt(document.getElementById('driver-points').value);
+      if (!name || !team || isNaN(points)) {
+        errorBox.textContent = 'Please fill out all fields correctly.';
+        return;
+      }
+      errorBox.textContent = '';
+      drivers.push({ name, team, points });
+      saveDrivers();
+      renderDrivers();
+      document.getElementById('driver-name').value = '';
+      document.getElementById('driver-team').value = '';
+      document.getElementById('driver-points').value = '';
+    }
+
+    function removeDriver(index) {
+      drivers.splice(index, 1);
+      saveDrivers();
+      renderDrivers();
+    }
+
+    function clearDrivers() {
+      if (confirm('Are you sure you want to remove all drivers?')) {
+        drivers = [];
+        saveDrivers();
+        renderDrivers();
+      }
+    }
+
+    renderDrivers();
+  </script>
+</body>
+</html>
